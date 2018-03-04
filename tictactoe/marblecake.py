@@ -36,7 +36,7 @@ class GameBoard(QtGui.QWidget):
         super(GameBoard, self).__init__(*args, **kwargs)
 
         self.buttons = []
-        for i in range(0, 9):
+        for i in range(9):
             self.buttons.append(GameButton(i))
 
         size = 4 * GRID_SPACING + 3 * BUTTON_SIZE + 6 * BUTTON_BORDER_SIZE
@@ -60,18 +60,20 @@ class GameButton(QtGui.QPushButton):
 
         self.setFixedSize(BUTTON_SIZE, BUTTON_SIZE)
         self.setFlat(True)
-        style = ('font-size: {font_size}px;'
-                 'line-height: {font_size}px;'
-                 'border: {border_size}px solid transparent;')
+        styles = [
+            'font-size: {font_size}px;',
+            'line-height: {font_size}px;',
+            'border: {border_size}px solid transparent;',
+        ]
         if self.row % 3:
-            style += 'border-top-color: black;'
+            styles.append('border-top-color: black;')
         if (self.row + 1) % 3:
-            style += 'border-bottom-color: black;'
+            styles.append('border-bottom-color: black;')
         if self.col % 3:
-            style += 'border-left-color: black;'
+            styles.append('border-left-color: black;')
         if (self.col + 1) % 3:
-            style += 'border-right-color: black;'
-        style = style.format(
+            styles.append('border-right-color: black;')
+        style = ' '.join(styles).format(
             font_size=BUTTON_FONT_SIZE,
             border_size=BUTTON_BORDER_SIZE,
         )
