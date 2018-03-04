@@ -22,8 +22,8 @@ class GameWindow(QtGui.QMainWindow):
         self.statusBar().setSizeGripEnabled(False)
         self.statusBar().showMessage("Click any square to begin")
 
-        area = GameArea(self)
-        self.setCentralWidget(area)
+        board = GameBoard(self)
+        self.setCentralWidget(board)
 
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
@@ -31,9 +31,9 @@ class GameWindow(QtGui.QMainWindow):
         self.setFixedSize(width, height)
 
 
-class GameArea(QtGui.QWidget):
+class GameBoard(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
-        super(GameArea, self).__init__(*args, **kwargs)
+        super(GameBoard, self).__init__(*args, **kwargs)
 
         size = 3 * (BUTTON_SIZE + GRID_SPACING) + 6 * BUTTON_BORDER_SIZE
         self.setFixedSize(size, size)
