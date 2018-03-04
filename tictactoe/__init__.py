@@ -9,6 +9,6 @@ from .marblecake import GameWindow
 
 def main(argv):
     app = QtGui.QApplication(argv)
-    window = GameWindow()
-    window.show()
+    the_game = GameWindow()
+    the_game.show()
     app.exec_()
