@@ -123,12 +123,16 @@ class GameBoard(QtGui.QWidget):
         self.move(position, current_player)
 
     def move(self, position, player):
+        if self.isComplete():
+            return
+
         if self.state[position]:
             return
 
         self.state[position] = player
         self.buttons[position].setText(str(player))
         self.playerMoves.emit()
+        self.checkCompleteness()
         self.checkState()
 
     def getAvailableMoves(self):
@@ -141,8 +145,12 @@ class GameBoard(QtGui.QWidget):
             if len(state) == 3 and is_same_user:
                 self.weHaveAWinner.emit(state[0])
 
-        if len(self.getAvailableMoves()) == 0:
+    def checkCompleteness(self):
+        if self.isComplete():
             self.weHaveADraw.emit()
+
+    def isComplete(self):
+        return len(self.getAvailableMoves()) == 0
 
 
 class GameButton(QtGui.QPushButton):
