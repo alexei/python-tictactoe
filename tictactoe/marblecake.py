@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from itertools import cycle
+import random
 
 from PyQt4 import QtCore, QtGui
 
@@ -23,6 +24,13 @@ class GameWindow(QtGui.QMainWindow):
 
         self.statusBar().setSizeGripEnabled(False)
 
+        self.players = [
+            HumanPlayer(CHARACTER_X),
+            DumbMachinePlayer(CHARACTER_0),
+        ]
+        self.players_iterator = cycle(self.players)
+        self.current_player = self.switchPlayers()
+
         board = GameBoard(self)
         self.setCentralWidget(board)
         board.playerMoves.connect(self.switchPlayers)
@@ -32,15 +40,9 @@ class GameWindow(QtGui.QMainWindow):
             self.statusBar().frameGeometry().height()
         self.setFixedSize(width, height)
 
-        self.players = [
-            HumanPlayer(CHARACTER_X),
-            HumanPlayer(CHARACTER_0),
-        ]
-        self.players_iterator = cycle(self.players)
-        self.current_player = self.switchPlayers()
-
     def switchPlayers(self):
         self.current_player = self.players_iterator.next()
+        self.current_player.poke()
         self.statusBar().showMessage(
             "{player} moves".format(player=self.current_player)
         )
@@ -73,6 +75,10 @@ class GameBoard(QtGui.QWidget):
         for button in self.buttons:
             grid.addWidget(button, button.row, button.col)
             button.userInput.connect(self.handleInput)
+
+        for player in self.parent().players:
+            if isinstance(player, BaseMachinePlayer):
+                player.move.connect(self.handleInput)
 
     def handleInput(self, position):
         current_player = self.parent().getCurrentPlayer()
@@ -128,8 +134,10 @@ class GameButton(QtGui.QPushButton):
         self.userInput.emit(self.value)
 
 
-class BasePlayer(object):
-    def __init__(self, role):
+class BasePlayer(QtCore.QObject):
+    def __init__(self, role, *args, **kwargs):
+        super(BasePlayer, self).__init__(*args, **kwargs)
+
         self.role = role
 
     def __str__(self):
@@ -137,6 +145,27 @@ class BasePlayer(object):
 
     def __unicode__(self):
         return unicode(self.role)
+
+    def poke(self):
+        pass
+
+
+class BaseMachinePlayer(BasePlayer):
+    move = QtCore.pyqtSignal(int)
+
+
+class DumbMachinePlayer(BaseMachinePlayer):
+    def __init__(self, *args, **kwargs):
+        super(DumbMachinePlayer, self).__init__(*args, **kwargs)
+
+    def poke(self):
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self._move)
+        self.timer.start(random.choice(range(2)) * 1000)
+
+    def _move(self):
+        self.timer.stop()
+        self.move.emit(random.choice(range(9)))
 
 
 class HumanPlayer(BasePlayer):
