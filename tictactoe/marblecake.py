@@ -3,11 +3,12 @@
 from __future__ import absolute_import
 
 from itertools import cycle
+from operator import itemgetter
 
 from PyQt4 import QtCore, QtGui
 
 from .players import (
-    DumbMachinePlayer, HumanPlayer, MachinePlayer,
+    DumbMachinePlayer, HumanPlayer, MachinePlayer, Player
 )
 
 
@@ -38,6 +39,8 @@ class GameWindow(QtGui.QMainWindow):
         self.board = GameBoard(self)
         self.setCentralWidget(self.board)
         self.board.playerMoves.connect(self.switchPlayers)
+        self.board.weHaveAWinner.connect(self.handleWinner)
+        self.board.weHaveADraw.connect(self.handleDraw)
 
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
@@ -57,15 +60,36 @@ class GameWindow(QtGui.QMainWindow):
     def getCurrentPlayer(self):
         return self.current_player
 
+    def handleWinner(self, player):
+        self.statusBar().showMessage(
+            "{player} wins \:D/".format(player=player)
+        )
+
+    def handleDraw(self):
+        self.statusBar().showMessage("It's a draw :(")
+
 
 class GameBoard(QtGui.QWidget):
     playerMoves = QtCore.pyqtSignal()
+    weHaveAWinner = QtCore.pyqtSignal(Player)
+    weHaveADraw = QtCore.pyqtSignal()
+
+    WINNING_POSITIONS = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [1, 4, 8],
+        [2, 4, 6],
+    ]
 
     def __init__(self, *args, **kwargs):
         super(GameBoard, self).__init__(*args, **kwargs)
 
         self.positions = range(9)
-        self.values = [None] * len(self.positions)
+        self.state = [None] * len(self.positions)
 
         self.buttons = []
         for i in self.positions:
@@ -99,15 +123,26 @@ class GameBoard(QtGui.QWidget):
         self.move(position, current_player)
 
     def move(self, position, player):
-        if self.values[position]:
+        if self.state[position]:
             return
 
-        self.values[position] = player
+        self.state[position] = player
         self.buttons[position].setText(str(player))
         self.playerMoves.emit()
+        self.checkState()
 
     def getAvailableMoves(self):
-        return [position for position in self.positions if not self.values[position]]
+        return [position for position in self.positions if not self.state[position]]
+
+    def checkState(self):
+        for positions in GameBoard.WINNING_POSITIONS:
+            state = filter(None, itemgetter(*positions)(self.state))
+            is_same_user = len(set(state)) == 1
+            if len(state) == 3 and is_same_user:
+                self.weHaveAWinner.emit(state[0])
+
+        if len(self.getAvailableMoves()) == 0:
+            self.weHaveADraw.emit()
 
 
 class GameButton(QtGui.QPushButton):

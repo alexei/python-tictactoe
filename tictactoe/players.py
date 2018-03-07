@@ -10,12 +10,13 @@ __all__ = [
     'MachinePlayer',
     'DumbMachinePlayer',
     'HumanPlayer',
+    'Player',
 ]
 
 
-class BasePlayer(QtCore.QObject):
+class Player(QtCore.QObject):
     def __init__(self, role, *args, **kwargs):
-        super(BasePlayer, self).__init__(*args, **kwargs)
+        super(Player, self).__init__(*args, **kwargs)
 
         self.role = role
 
@@ -29,7 +30,7 @@ class BasePlayer(QtCore.QObject):
         pass
 
 
-class MachinePlayer(BasePlayer):
+class MachinePlayer(Player):
     move = QtCore.pyqtSignal(int)
 
 
@@ -48,5 +49,5 @@ class DumbMachinePlayer(MachinePlayer):
             self.move.emit(random.choice(available_moves))
 
 
-class HumanPlayer(BasePlayer):
+class HumanPlayer(Player):
     pass
