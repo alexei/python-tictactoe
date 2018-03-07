@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from functools import partial
 from itertools import cycle
 import random
 
@@ -29,20 +30,21 @@ class GameWindow(QtGui.QMainWindow):
             DumbMachinePlayer(CHARACTER_0),
         ]
         self.players_iterator = cycle(self.players)
-        self.current_player = self.switchPlayers()
 
-        board = GameBoard(self)
-        self.setCentralWidget(board)
-        board.playerMoves.connect(self.switchPlayers)
+        self.board = GameBoard(self)
+        self.setCentralWidget(self.board)
+        self.board.playerMoves.connect(self.switchPlayers)
 
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
             self.statusBar().frameGeometry().height()
         self.setFixedSize(width, height)
 
+        self.current_player = self.switchPlayers()
+
     def switchPlayers(self):
         self.current_player = self.players_iterator.next()
-        self.current_player.poke()
+        self.current_player.poke(self.board.getAvailableMoves())
         self.statusBar().showMessage(
             "{player} moves".format(player=self.current_player)
         )
@@ -91,6 +93,9 @@ class GameBoard(QtGui.QWidget):
         self.values[position] = player
         self.buttons[position].setText(str(player))
         self.playerMoves.emit()
+
+    def getAvailableMoves(self):
+        return [position for position in self.positions if not self.values[position]]
 
 
 class GameButton(QtGui.QPushButton):
@@ -146,7 +151,7 @@ class BasePlayer(QtCore.QObject):
     def __unicode__(self):
         return unicode(self.role)
 
-    def poke(self):
+    def poke(self, *args, **kwargs):
         pass
 
 
@@ -158,14 +163,15 @@ class DumbMachinePlayer(BaseMachinePlayer):
     def __init__(self, *args, **kwargs):
         super(DumbMachinePlayer, self).__init__(*args, **kwargs)
 
-    def poke(self):
+    def poke(self, available_moves=[]):
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self._move)
-        self.timer.start(random.choice(range(2)) * 1000)
+        self.timer.timeout.connect(partial(self._move, available_moves))
+        self.timer.start(1000)
 
-    def _move(self):
+    def _move(self, available_moves=[]):
         self.timer.stop()
-        self.move.emit(random.choice(range(9)))
+        if available_moves:
+            self.move.emit(random.choice(available_moves))
 
 
 class HumanPlayer(BasePlayer):
