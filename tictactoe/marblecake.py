@@ -50,7 +50,7 @@ class GameWindow(QtGui.QMainWindow):
         self.current_player = self.switchPlayers()
 
     def switchPlayers(self):
-        if self.board.isComplete():
+        if self.board.isComplete:
             return
 
         self.current_player = self.players_iterator.next()
@@ -94,6 +94,8 @@ class GameBoard(QtGui.QWidget):
         self.positions = range(9)
         self.state = [None] * len(self.positions)
 
+        self.isComplete = False
+
         self.buttons = []
         for i in self.positions:
             self.buttons.append(GameButton(i))
@@ -114,12 +116,18 @@ class GameBoard(QtGui.QWidget):
                 player.move.connect(self.handleMachineInput)
 
     def handleHumanInput(self, position):
+        if self.isComplete:
+            return
+
         current_player = self.parent().getCurrentPlayer()
         if not isinstance(current_player, HumanPlayer):
             return
         self.move(position, current_player)
 
     def handleMachineInput(self, position):
+        if self.isComplete:
+            return
+
         current_player = self.parent().getCurrentPlayer()
         if not isinstance(current_player, MachinePlayer):
             return
@@ -145,14 +153,16 @@ class GameBoard(QtGui.QWidget):
             state = filter(None, itemgetter(*positions)(self.state))
             is_same_user = len(set(state)) == 1
             if len(state) == 3 and is_same_user:
+                self.isComplete = True
                 self.weHaveAWinner.emit(state[0])
+                return
 
-    def checkCompleteness(self):
-        if self.isComplete():
+        if self.isComplete:
             self.weHaveADraw.emit()
 
-    def isComplete(self):
-        return len(self.getAvailableMoves()) == 0
+    def checkCompleteness(self):
+        if len(self.getAvailableMoves()) == 0:
+            self.isComplete = True
 
 
 class GameButton(QtGui.QPushButton):
