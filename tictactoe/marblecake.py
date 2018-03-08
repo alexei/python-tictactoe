@@ -50,6 +50,9 @@ class GameWindow(QtGui.QMainWindow):
         self.current_player = self.switchPlayers()
 
     def switchPlayers(self):
+        if self.board.isComplete():
+            return
+
         self.current_player = self.players_iterator.next()
         self.current_player.poke(self.board.getAvailableMoves())
         self.statusBar().showMessage(
@@ -123,17 +126,16 @@ class GameBoard(QtGui.QWidget):
         self.move(position, current_player)
 
     def move(self, position, player):
-        if self.isComplete():
-            return
-
         if self.state[position]:
             return
 
         self.state[position] = player
         self.buttons[position].setText(str(player))
-        self.playerMoves.emit()
+
         self.checkCompleteness()
         self.checkState()
+
+        self.playerMoves.emit()
 
     def getAvailableMoves(self):
         return [position for position in self.positions if not self.state[position]]
