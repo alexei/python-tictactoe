@@ -41,7 +41,7 @@ class DumbMachinePlayer(MachinePlayer):
     def poke(self, available_moves=[]):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(partial(self._move, available_moves))
-        self.timer.start(1000)
+        self.timer.start(500)
 
     def _move(self, available_moves=[]):
         self.timer.stop()
