@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
+import sys
 
 from itertools import cycle
 from operator import itemgetter
 
 from PyQt4 import QtCore, QtGui
 
-from .players import (
+from players import (
     DumbMachinePlayer, HumanPlayer, MachinePlayer, Player
 )
 
@@ -204,3 +204,14 @@ class GameButton(QtGui.QPushButton):
 
     def handleClick(self):
         self.userInput.emit(self.value)
+
+
+def main(argv):
+    app = QtGui.QApplication(argv)
+    the_game = GameWindow()
+    the_game.show()
+    app.exec_()
+
+
+if __name__ == '__main__':
+    main(sys.argv)
