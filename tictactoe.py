@@ -14,8 +14,7 @@ from players import (
 
 BUTTON_SIZE = 100
 BUTTON_FONT_SIZE = 60
-BUTTON_BORDER_SIZE = 2
-GRID_SPACING = 1
+GRID_SPACING = 0
 CHARACTER_X = 'X'
 CHARACTER_0 = '0'
 
@@ -100,7 +99,7 @@ class GameBoard(QtGui.QWidget):
         for i in self.positions:
             self.buttons.append(GameButton(i))
 
-        size = 4 * GRID_SPACING + 3 * BUTTON_SIZE + 6 * BUTTON_BORDER_SIZE
+        size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
         self.setFixedSize(size, size)
 
         grid = QtGui.QGridLayout()
@@ -176,23 +175,12 @@ class GameButton(QtGui.QPushButton):
         self.col = self.value % 3
 
         self.setFixedSize(BUTTON_SIZE, BUTTON_SIZE)
-        self.setFlat(True)
         styles = [
             'font-size: {font_size}px;',
             'line-height: {font_size}px;',
-            'border: {border_size}px solid transparent;',
         ]
-        if self.row % 3:
-            styles.append('border-top-color: black;')
-        if (self.row + 1) % 3:
-            styles.append('border-bottom-color: black;')
-        if self.col % 3:
-            styles.append('border-left-color: black;')
-        if (self.col + 1) % 3:
-            styles.append('border-right-color: black;')
         style = ' '.join(styles).format(
             font_size=BUTTON_FONT_SIZE,
-            border_size=BUTTON_BORDER_SIZE,
         )
         self.setStyleSheet(style)
 
