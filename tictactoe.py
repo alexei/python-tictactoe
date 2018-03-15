@@ -82,6 +82,7 @@ class GameWindow(QtGui.QMainWindow):
     def closeEvent(self, event):
         if not self.engine.gameRunning:
             event.accept()
+            return
 
         confirm = QtGui.QMessageBox.question(
             self, self.APP_TITLE, self.CONFIRM_QUIT,

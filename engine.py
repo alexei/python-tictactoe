@@ -58,9 +58,9 @@ class Engine(QtCore.QObject):
             self.endGame()
 
     def endGame(self):
-        self.gameEnded.emit()
-
         self.gameRunning = False
+
+        self.gameEnded.emit()
 
     def handlePlayerMove(self, position, player):
         self.awaitingMove = False
