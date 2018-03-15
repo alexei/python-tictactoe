@@ -2,110 +2,89 @@
 
 import sys
 
-from itertools import cycle
-from operator import itemgetter
-
 from PyQt4 import QtCore, QtGui
 
-from players import DumbMachinePlayer, HumanPlayer, MachinePlayer, Player
+from board import Board
+from engine import Engine
+from players import DumbMachinePlayer, HumanPlayer
 
 
 BUTTON_SIZE = 100
 BUTTON_FONT_SIZE = 60
 GRID_SPACING = 0
-CHARACTER_X = 'X'
-CHARACTER_0 = '0'
 
 
 class GameWindow(QtGui.QMainWindow):
-    playerSwitch = QtCore.pyqtSignal()
+    MESSAGE_WAIT = "{player} moves"
+    MESSAGE_WIN = "{player} wins \:D/"
+    MESSAGE_DRAW = "It's a draw :|"
 
     def __init__(self, *args, **kwargs):
         super(GameWindow, self).__init__(*args, **kwargs)
 
-        self.players = [
-            HumanPlayer(CHARACTER_X),
-            DumbMachinePlayer(CHARACTER_0),
-        ]
-        self.players_iterator = cycle(self.players)
+        self.setupEngine()
 
         self.setupUi()
-        self.setupEventListeners()
 
-        self.current_player = self.switchPlayers()
+        self.startGame()
+
+    def setupEngine(self):
+        board = Board()
+        player_1 = HumanPlayer(Engine.ROLE_X, board)
+        player_2 = DumbMachinePlayer(Engine.ROLE_0, board)
+        self.engine = Engine(board, player_1, player_2)
+        self.engine.roundStarted.connect(self.handleRoundStarted)
+        self.engine.gameEnded.connect(self.handleGameEnded)
 
     def setupUi(self):
         self.setWindowTitle("Tic-tac-toe")
 
         self.statusBar().setSizeGripEnabled(False)
 
-        self.board = GameBoard(self)
-        self.setCentralWidget(self.board)
+        self.boardWidget = BoardWidget(self, engine=self.engine)
+        self.setCentralWidget(self.boardWidget)
 
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
             self.statusBar().frameGeometry().height()
         self.setFixedSize(width, height)
 
-    def setupEventListeners(self):
-        self.board.playerMoves.connect(self.switchPlayers)
-        self.board.weHaveAWinner.connect(self.handleWinner)
-        self.board.weHaveADraw.connect(self.handleDraw)
+    def startGame(self):
+        self.engine.startGame()
 
-    def switchPlayers(self):
-        if self.board.isComplete:
-            return
+    def handleRoundStarted(self):
+        player = self.engine.players.current()
+        self.notify(self.MESSAGE_WAIT.format(player=player))
 
-        self.current_player = self.players_iterator.next()
-        self.current_player.poke(self.board.getAvailableMoves())
-        self.statusBar().showMessage(
-            "{player} moves".format(player=self.current_player)
-        )
-        return self.current_player
+    def handleGameEnded(self):
+        winner = self.engine.board.getWinner()
+        if winner:
+            self.notify(self.MESSAGE_WIN.format(player=winner))
+        else:
+            self.notify(self.MESSAGE_DRAW)
 
-    def getCurrentPlayer(self):
-        return self.current_player
-
-    def handleWinner(self, player):
-        self.statusBar().showMessage(
-            "{player} wins \:D/".format(player=player)
-        )
-
-    def handleDraw(self):
-        self.statusBar().showMessage("It's a draw :(")
+    def notify(self, message):
+        self.statusBar().showMessage(message)
 
 
-class GameBoard(QtGui.QWidget):
-    playerMoves = QtCore.pyqtSignal()
-    weHaveAWinner = QtCore.pyqtSignal(Player)
-    weHaveADraw = QtCore.pyqtSignal()
-
-    WINNING_POSITIONS = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-    ]
-
+class BoardWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
-        super(GameBoard, self).__init__(*args, **kwargs)
+        engine = kwargs.pop('engine')
 
-        self.positions = range(9)
-        self.state = [None] * len(self.positions)
+        super(BoardWidget, self).__init__(*args, **kwargs)
 
-        self.isComplete = False
-
-        self.buttons = []
+        self.setupEngine(engine)
 
         self.setupUi()
-        self.setupEventListeners()
+
+    def setupEngine(self, engine):
+        self.engine = engine
+        self.engine.playerMoved.connect(self.handlePlayerMoved)
 
     def setupUi(self):
-        for position in self.positions:
+        self.buttons = []
+
+        for position in self.engine.board.positions:
             self.buttons.append(GameButton(position))
 
         size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
@@ -117,75 +96,22 @@ class GameBoard(QtGui.QWidget):
 
         for button in self.buttons:
             grid.addWidget(button, button.position / 3, button.position % 3)
+            button.playerClicked.connect(self.engine.handleInput)
 
-    def setupEventListeners(self):
-        for button in self.buttons:
-            button.userInput.connect(self.handleHumanInput)
-
-        for player in self.parent().players:
-            if isinstance(player, MachinePlayer):
-                player.move.connect(self.handleMachineInput)
-
-    def handleHumanInput(self, position):
-        if self.isComplete:
-            return
-
-        current_player = self.parent().getCurrentPlayer()
-        if not isinstance(current_player, HumanPlayer):
-            return
-        self.move(position, current_player)
-
-    def handleMachineInput(self, position):
-        if self.isComplete:
-            return
-
-        current_player = self.parent().getCurrentPlayer()
-        if not isinstance(current_player, MachinePlayer):
-            return
-        self.move(position, current_player)
-
-    def move(self, position, player):
-        if self.state[position]:
-            return
-
-        self.state[position] = player
-        self.buttons[position].setText(str(player))
-
-        self.checkCompleteness()
-        self.checkState()
-
-        self.playerMoves.emit()
-
-    def getAvailableMoves(self):
-        return [position for position in self.positions if not self.state[position]]
-
-    def checkState(self):
-        for positions in GameBoard.WINNING_POSITIONS:
-            state = filter(None, itemgetter(*positions)(self.state))
-            is_same_user = len(set(state)) == 1
-            if len(state) == 3 and is_same_user:
-                self.isComplete = True
-                self.weHaveAWinner.emit(state[0])
-                return
-
-        if self.isComplete:
-            self.weHaveADraw.emit()
-
-    def checkCompleteness(self):
-        if len(self.getAvailableMoves()) == 0:
-            self.isComplete = True
+    def handlePlayerMoved(self, position, player):
+        self.buttons[position].markPlayer(player)
 
 
 class GameButton(QtGui.QPushButton):
-    userInput = QtCore.pyqtSignal(int)
+    playerClicked = QtCore.pyqtSignal(int)
 
     def __init__(self, position, *args, **kwargs):
         super(GameButton, self).__init__(*args, **kwargs)
 
         self.position = position
+        self.isMarked = False
 
         self.setupUi()
-        self.setupEventListeners()
 
     def setupUi(self):
         self.setFixedSize(BUTTON_SIZE, BUTTON_SIZE)
@@ -203,11 +129,15 @@ class GameButton(QtGui.QPushButton):
         font.setStyleHint(QtGui.QFont.Monospace)
         self.setFont(font)
 
-    def setupEventListeners(self):
         self.clicked.connect(self.handleClick)
 
     def handleClick(self):
-        self.userInput.emit(self.position)
+        if not self.isMarked:
+            self.playerClicked.emit(self.position)
+
+    def markPlayer(self, player):
+        self.isMarked = True
+        self.setText(str(player))
 
 
 def main(argv):

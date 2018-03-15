@@ -1,53 +1,53 @@
 # -*- coding: utf-8 -*-
 
-from functools import partial
+from itertools import cycle
 import random
 
 from PyQt4 import QtCore
 
 
-__all__ = [
-    'MachinePlayer',
-    'DumbMachinePlayer',
-    'HumanPlayer',
-    'Player',
-]
+class PlayersGroup(object):
+    def __init__(self, player_1, player_2):
+        self.players = [player_1, player_2]
+        self.playersIterator = cycle(self.players)
+        self.currentPlayer = None
+
+    def current(self):
+        return self.currentPlayer
+
+    def switch(self):
+        self.currentPlayer = self.playersIterator.next()
 
 
-class Player(QtCore.QObject):
-    def __init__(self, role, *args, **kwargs):
-        super(Player, self).__init__(*args, **kwargs)
-
+class Player(object):
+    def __init__(self, role, board):
         self.role = role
+        self.board = board
 
     def __str__(self):
         return str(self.role)
 
-    def __unicode__(self):
-        return unicode(self.role)
-
-    def poke(self, *args, **kwargs):
+    def headsUp(self):
         pass
 
 
+class HumanPlayer(Player):
+    def acceptInput(self, position):
+        self.board.move(position, self)
+
+
 class MachinePlayer(Player):
-    move = QtCore.pyqtSignal(int)
+    pass
 
 
 class DumbMachinePlayer(MachinePlayer):
-    def __init__(self, *args, **kwargs):
-        super(DumbMachinePlayer, self).__init__(*args, **kwargs)
-
-    def poke(self, available_moves=[]):
+    def headsUp(self):
+        def move():
+            self.timer.stop()
+            if self.board.hasAvailablePositions():
+                self.board.move(
+                    random.choice(self.board.getAvailablePositions()), self
+                )
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(partial(self._move, available_moves))
+        self.timer.timeout.connect(move)
         self.timer.start(500)
-
-    def _move(self, available_moves=[]):
-        self.timer.stop()
-        if available_moves:
-            self.move.emit(random.choice(available_moves))
-
-
-class HumanPlayer(Player):
-    pass
