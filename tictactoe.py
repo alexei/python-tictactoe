@@ -15,9 +15,11 @@ GRID_SPACING = 0
 
 
 class GameWindow(QtGui.QMainWindow):
+    APP_TITLE = "Tic-tac-toe"
     MESSAGE_WAIT = "{player} moves"
     MESSAGE_WIN = "{player} wins \:D/"
     MESSAGE_DRAW = "It's a draw :|"
+    CONFIRM_QUIT = "The game is still running. Are you sure you want to quit?"
 
     def __init__(self, *args, **kwargs):
         super(GameWindow, self).__init__(*args, **kwargs)
@@ -44,7 +46,7 @@ class GameWindow(QtGui.QMainWindow):
         self.engine.gameEnded.connect(self.handleGameEnded)
 
     def setupUi(self):
-        self.setWindowTitle("Tic-tac-toe")
+        self.setWindowTitle(self.APP_TITLE)
 
         self.boardWidget = BoardWidget(self, engine=self.engine)
         self.setCentralWidget(self.boardWidget)
@@ -76,6 +78,19 @@ class GameWindow(QtGui.QMainWindow):
 
     def notify(self, message):
         self.statusBar().showMessage(message)
+
+    def closeEvent(self, event):
+        if not self.engine.gameRunning:
+            event.accept()
+
+        confirm = QtGui.QMessageBox.question(
+            self, self.APP_TITLE, self.CONFIRM_QUIT,
+            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+            QtGui.QMessageBox.No)
+        if confirm == QtGui.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 
 class BoardWidget(QtGui.QWidget):
