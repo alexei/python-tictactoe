@@ -6,6 +6,12 @@ from players import Player, PlayersGroup
 
 
 class Engine(QtCore.QObject):
+    '''The game engine
+
+    The game engine is basically a FSM that acts as an arbiter given a board
+    and two players
+    '''
+
     gameStarted = QtCore.pyqtSignal()
     roundStarted = QtCore.pyqtSignal()
     roundEnded = QtCore.pyqtSignal()
@@ -28,7 +34,7 @@ class Engine(QtCore.QObject):
 
         self.gameRunning = True
 
-        if self.gameRunning and self.board.hasAvailablePositions():
+        if self.board.hasAvailablePositions():
             self.players.switch()
             self.startRound()
         else:
@@ -64,5 +70,6 @@ class Engine(QtCore.QObject):
         self.endRound()
 
     def handleInput(self, position):
+        # pass input to current player only if they are able to accept it
         if self.awaitingMove and getattr(self.players.current(), 'acceptInput', None):
             self.players.current().acceptInput(position)

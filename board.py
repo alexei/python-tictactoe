@@ -37,11 +37,15 @@ class Board(QtCore.QObject):
 
     def getWinner(self):
         for winningState in self.WINNING_STATES:
+            # compare winning state to actual state
             actualState = filter(None, itemgetter(*winningState)(self.state))
+            # check if these positions are marked and they belong to the
+            # same player
             if len(actualState) == 3 and len(set(actualState)) == 1:
                 return actualState[0]
 
     def move(self, position, player):
+        # prevent accidents
         if self.state[position]:
             return
 

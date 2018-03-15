@@ -29,9 +29,16 @@ class GameWindow(QtGui.QMainWindow):
         self.startGame()
 
     def setupEngine(self):
+        ''' Sets up game engine
+
+        By default, we're creating a human vs machine game
+        '''
+
         board = Board()
+
         player_1 = HumanPlayer(Engine.ROLE_X, board)
         player_2 = DumbMachinePlayer(Engine.ROLE_0, board)
+
         self.engine = Engine(board, player_1, player_2)
         self.engine.roundStarted.connect(self.handleRoundStarted)
         self.engine.gameEnded.connect(self.handleGameEnded)
@@ -39,24 +46,28 @@ class GameWindow(QtGui.QMainWindow):
     def setupUi(self):
         self.setWindowTitle("Tic-tac-toe")
 
-        self.statusBar().setSizeGripEnabled(False)
-
         self.boardWidget = BoardWidget(self, engine=self.engine)
         self.setCentralWidget(self.boardWidget)
 
+        # compute contents sizes and set a fixed size on the window
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
             self.statusBar().frameGeometry().height()
         self.setFixedSize(width, height)
 
+        # prevent resizing
+        self.statusBar().setSizeGripEnabled(False)
+
     def startGame(self):
         self.engine.startGame()
 
     def handleRoundStarted(self):
+        # notify player when it's their turn
         player = self.engine.players.current()
         self.notify(self.MESSAGE_WAIT.format(player=player))
 
     def handleGameEnded(self):
+        # when the game ends, notify user if we have a winner
         winner = self.engine.board.getWinner()
         if winner:
             self.notify(self.MESSAGE_WIN.format(player=winner))
@@ -109,6 +120,8 @@ class GameButton(QtGui.QPushButton):
         super(GameButton, self).__init__(*args, **kwargs)
 
         self.position = position
+        # keep track of whether the button was marked or not in order to ignore
+        # futher interaction
         self.isMarked = False
 
         self.setupUi()
