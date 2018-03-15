@@ -7,9 +7,7 @@ from operator import itemgetter
 
 from PyQt4 import QtCore, QtGui
 
-from players import (
-    DumbMachinePlayer, HumanPlayer, MachinePlayer, Player
-)
+from players import DumbMachinePlayer, HumanPlayer, MachinePlayer, Player
 
 
 BUTTON_SIZE = 100
