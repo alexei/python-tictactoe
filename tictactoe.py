@@ -94,8 +94,8 @@ class GameBoard(QtGui.QWidget):
         self.isComplete = False
 
         self.buttons = []
-        for i in self.positions:
-            self.buttons.append(GameButton(i))
+        for position in self.positions:
+            self.buttons.append(GameButton(position))
 
         size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
         self.setFixedSize(size, size)
@@ -105,7 +105,7 @@ class GameBoard(QtGui.QWidget):
         self.setLayout(grid)
 
         for button in self.buttons:
-            grid.addWidget(button, button.row, button.col)
+            grid.addWidget(button, button.position / 3, button.position % 3)
             button.userInput.connect(self.handleHumanInput)
 
         for player in self.parent().players:
@@ -165,12 +165,10 @@ class GameBoard(QtGui.QWidget):
 class GameButton(QtGui.QPushButton):
     userInput = QtCore.pyqtSignal(int)
 
-    def __init__(self, value, *args, **kwargs):
+    def __init__(self, position, *args, **kwargs):
         super(GameButton, self).__init__(*args, **kwargs)
 
-        self.value = value
-        self.row = self.value / 3
-        self.col = self.value % 3
+        self.position = position
 
         self.setFixedSize(BUTTON_SIZE, BUTTON_SIZE)
         styles = [
@@ -189,7 +187,7 @@ class GameButton(QtGui.QPushButton):
         self.clicked.connect(self.handleClick)
 
     def handleClick(self):
-        self.userInput.emit(self.value)
+        self.userInput.emit(self.position)
 
 
 def main(argv):
