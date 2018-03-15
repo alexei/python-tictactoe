@@ -23,28 +23,34 @@ class GameWindow(QtGui.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(GameWindow, self).__init__(*args, **kwargs)
 
-        self.setWindowTitle("Tic-tac-toe")
-
-        self.statusBar().setSizeGripEnabled(False)
-
         self.players = [
             HumanPlayer(CHARACTER_X),
             DumbMachinePlayer(CHARACTER_0),
         ]
         self.players_iterator = cycle(self.players)
 
+        self.setupUi()
+        self.setupEventListeners()
+
+        self.current_player = self.switchPlayers()
+
+    def setupUi(self):
+        self.setWindowTitle("Tic-tac-toe")
+
+        self.statusBar().setSizeGripEnabled(False)
+
         self.board = GameBoard(self)
         self.setCentralWidget(self.board)
-        self.board.playerMoves.connect(self.switchPlayers)
-        self.board.weHaveAWinner.connect(self.handleWinner)
-        self.board.weHaveADraw.connect(self.handleDraw)
 
         width = self.centralWidget().frameGeometry().width()
         height = self.centralWidget().frameGeometry().height() + \
             self.statusBar().frameGeometry().height()
         self.setFixedSize(width, height)
 
-        self.current_player = self.switchPlayers()
+    def setupEventListeners(self):
+        self.board.playerMoves.connect(self.switchPlayers)
+        self.board.weHaveAWinner.connect(self.handleWinner)
+        self.board.weHaveADraw.connect(self.handleDraw)
 
     def switchPlayers(self):
         if self.board.isComplete:
@@ -94,6 +100,11 @@ class GameBoard(QtGui.QWidget):
         self.isComplete = False
 
         self.buttons = []
+
+        self.setupUi()
+        self.setupEventListeners()
+
+    def setupUi(self):
         for position in self.positions:
             self.buttons.append(GameButton(position))
 
@@ -106,6 +117,9 @@ class GameBoard(QtGui.QWidget):
 
         for button in self.buttons:
             grid.addWidget(button, button.position / 3, button.position % 3)
+
+    def setupEventListeners(self):
+        for button in self.buttons:
             button.userInput.connect(self.handleHumanInput)
 
         for player in self.parent().players:
@@ -170,7 +184,12 @@ class GameButton(QtGui.QPushButton):
 
         self.position = position
 
+        self.setupUi()
+        self.setupEventListeners()
+
+    def setupUi(self):
         self.setFixedSize(BUTTON_SIZE, BUTTON_SIZE)
+
         styles = [
             'font-size: {font_size}px;',
             'line-height: {font_size}px;',
@@ -184,6 +203,7 @@ class GameButton(QtGui.QPushButton):
         font.setStyleHint(QtGui.QFont.Monospace)
         self.setFont(font)
 
+    def setupEventListeners(self):
         self.clicked.connect(self.handleClick)
 
     def handleClick(self):
