@@ -5,14 +5,14 @@ import sys
 try:
     from PyQt4.QtCore import pyqtSignal
     from PyQt4.QtGui import (
-        QApplication, QFont, QGridLayout, QMainWindow, QMessageBox,
-        QPushButton, QWidget,
+        QApplication, QButtonGroup, QFont, QGridLayout, QMainWindow,
+        QMessageBox, QPushButton, QWidget,
     )
 except ImportError:
     from PyQt5.QtCore import pyqtSignal
     from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import (
-        QApplication, QGridLayout, QMainWindow, QMessageBox,
+        QApplication, QButtonGroup, QGridLayout, QMainWindow, QMessageBox,
         QPushButton, QWidget,
     )
 
@@ -92,19 +92,17 @@ class GameWindow(QMainWindow):
         self.statusBar().showMessage(message)
 
     def closeEvent(self, event):
-        if not self.engine.gameRunning:
-            event.accept()
-            return
-
-        confirm = QMessageBox.question(
-            self, self.APP_TITLE, self.CONFIRM_QUIT,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No)
-        if confirm == QMessageBox.Yes:
-            event.accept()
+        if self.engine.gameRunning:
+            confirm = QMessageBox.question(
+                self, self.APP_TITLE, self.CONFIRM_QUIT,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                event.accept()
             else:
+                event.ignore()
         else:
-            event.ignore()
+            event.accept()
 
 
 class BoardWidget(QWidget):
@@ -122,36 +120,29 @@ class BoardWidget(QWidget):
         self.engine.playerMoved.connect(self.handlePlayerMoved)
 
     def setupUi(self):
-        self.buttons = []
-
-        for position in self.engine.board.positions:
-            self.buttons.append(GameButton(position))
-
-        size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
-        self.setFixedSize(size, size)
-
         grid = QGridLayout()
         grid.setSpacing(GRID_SPACING)
         self.setLayout(grid)
 
-        for button in self.buttons:
-            grid.addWidget(button, button.position / 3, button.position % 3)
-            button.playerClicked.connect(self.engine.handleInput)
+        self.buttonGroup = QButtonGroup()
+        for position in self.engine.board.positions:
+            button = GameButton(position)
+            self.buttonGroup.addButton(button, position)
+            grid.addWidget(button, position / 3, position % 3)
+        self.buttonGroup.buttonClicked['int'].connect(self.engine.handleInput)
+
+        size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
+        self.setFixedSize(size, size)
 
     def handlePlayerMoved(self, position, player):
-        self.buttons[position].markPlayer(player)
+        self.buttonGroup.buttons()[position].markPlayer(player)
 
 
 class GameButton(QPushButton):
-    playerClicked = pyqtSignal(int)
-
     def __init__(self, position, *args, **kwargs):
         super(GameButton, self).__init__(*args, **kwargs)
 
         self.position = position
-        # keep track of whether the button was marked or not in order to ignore
-        # futher interaction
-        self.isMarked = False
 
         self.setupUi()
 
@@ -171,14 +162,7 @@ class GameButton(QPushButton):
         font.setStyleHint(QFont.Monospace)
         self.setFont(font)
 
-        self.clicked.connect(self.handleClick)
-
-    def handleClick(self):
-        if not self.isMarked:
-            self.playerClicked.emit(self.position)
-
     def markPlayer(self, player):
-        self.isMarked = True
         self.setText(str(player))
 
 
