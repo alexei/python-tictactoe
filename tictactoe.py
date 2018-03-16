@@ -102,6 +102,7 @@ class GameWindow(QMainWindow):
             QMessageBox.No)
         if confirm == QMessageBox.Yes:
             event.accept()
+            else:
         else:
             event.ignore()
 
