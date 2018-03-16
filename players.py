@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from builtins import next
 from itertools import cycle
 import random
 
-from PyQt4 import QtCore
+try:
+    from PyQt4.QtCore import QTimer
+except ImportError:
+    from PyQt5.QtCore import QTimer
 
 
 class PlayersGroup(object):
@@ -19,7 +23,7 @@ class PlayersGroup(object):
         return self.currentPlayer
 
     def switch(self):
-        self.currentPlayer = self.playersIterator.next()
+        self.currentPlayer = next(self.playersIterator)
 
 
 class Player(object):
@@ -62,6 +66,6 @@ class DumbMachinePlayer(MachinePlayer):
                 self.board.move(
                     random.choice(self.board.getAvailablePositions()), self
                 )
-        self.timer = QtCore.QTimer()
+        self.timer = QTimer()
         self.timer.timeout.connect(move)
         self.timer.start(500)

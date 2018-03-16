@@ -2,13 +2,16 @@
 
 from operator import itemgetter
 
-from PyQt4 import QtCore
+try:
+    from PyQt4.QtCore import QObject, pyqtSignal
+except ImportError:
+    from PyQt5.QtCore import QObject, pyqtSignal
 
 from players import Player
 
 
-class Board(QtCore.QObject):
-    playerMoved = QtCore.pyqtSignal(int, Player)
+class Board(QObject):
+    playerMoved = pyqtSignal(int, Player)
 
     WINNING_STATES = [
         [0, 1, 2],
@@ -28,7 +31,7 @@ class Board(QtCore.QObject):
         self.state = [''] * len(self.positions)
 
     def hasAvailablePositions(self):
-        return len(filter(None, self.state)) != len(self.positions)
+        return len([p for p in self.state if p]) != len(self.positions)
 
     def getAvailablePositions(self):
         return [
@@ -38,7 +41,7 @@ class Board(QtCore.QObject):
     def getWinner(self):
         for winningState in self.WINNING_STATES:
             # compare winning state to actual state
-            actualState = filter(None, itemgetter(*winningState)(self.state))
+            actualState = [p for p in itemgetter(*winningState)(self.state) if p]
             # check if these positions are marked and they belong to the
             # same player
             if len(actualState) == 3 and len(set(actualState)) == 1:

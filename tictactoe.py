@@ -2,7 +2,19 @@
 
 import sys
 
-from PyQt4 import QtCore, QtGui
+try:
+    from PyQt4.QtCore import pyqtSignal
+    from PyQt4.QtGui import (
+        QApplication, QFont, QGridLayout, QMainWindow, QMessageBox,
+        QPushButton, QWidget,
+    )
+except ImportError:
+    from PyQt5.QtCore import pyqtSignal
+    from PyQt5.QtGui import QFont
+    from PyQt5.QtWidgets import (
+        QApplication, QGridLayout, QMainWindow, QMessageBox,
+        QPushButton, QWidget,
+    )
 
 from board import Board
 from engine import Engine
@@ -14,7 +26,7 @@ BUTTON_FONT_SIZE = 60
 GRID_SPACING = 0
 
 
-class GameWindow(QtGui.QMainWindow):
+class GameWindow(QMainWindow):
     APP_TITLE = "Tic-tac-toe"
     MESSAGE_WAIT = "{player} moves"
     MESSAGE_WIN = "{player} wins \:D/"
@@ -84,17 +96,17 @@ class GameWindow(QtGui.QMainWindow):
             event.accept()
             return
 
-        confirm = QtGui.QMessageBox.question(
+        confirm = QMessageBox.question(
             self, self.APP_TITLE, self.CONFIRM_QUIT,
-            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-            QtGui.QMessageBox.No)
-        if confirm == QtGui.QMessageBox.Yes:
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No)
+        if confirm == QMessageBox.Yes:
             event.accept()
         else:
             event.ignore()
 
 
-class BoardWidget(QtGui.QWidget):
+class BoardWidget(QWidget):
     def __init__(self, *args, **kwargs):
         engine = kwargs.pop('engine')
 
@@ -117,7 +129,7 @@ class BoardWidget(QtGui.QWidget):
         size = 4 * GRID_SPACING + 3 * BUTTON_SIZE
         self.setFixedSize(size, size)
 
-        grid = QtGui.QGridLayout()
+        grid = QGridLayout()
         grid.setSpacing(GRID_SPACING)
         self.setLayout(grid)
 
@@ -129,8 +141,8 @@ class BoardWidget(QtGui.QWidget):
         self.buttons[position].markPlayer(player)
 
 
-class GameButton(QtGui.QPushButton):
-    playerClicked = QtCore.pyqtSignal(int)
+class GameButton(QPushButton):
+    playerClicked = pyqtSignal(int)
 
     def __init__(self, position, *args, **kwargs):
         super(GameButton, self).__init__(*args, **kwargs)
@@ -154,8 +166,8 @@ class GameButton(QtGui.QPushButton):
         )
         self.setStyleSheet(style)
 
-        font = QtGui.QFont()
-        font.setStyleHint(QtGui.QFont.Monospace)
+        font = QFont()
+        font.setStyleHint(QFont.Monospace)
         self.setFont(font)
 
         self.clicked.connect(self.handleClick)
@@ -170,7 +182,7 @@ class GameButton(QtGui.QPushButton):
 
 
 def main(argv):
-    app = QtGui.QApplication(argv)
+    app = QApplication(argv)
     the_game = GameWindow()
     the_game.show()
     app.exec_()

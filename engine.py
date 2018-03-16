@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4 import QtCore
+try:
+    from PyQt4.QtCore import QObject, pyqtSignal
+except ImportError:
+    from PyQt5.QtCore import QObject, pyqtSignal
 
 from players import Player, PlayersGroup
 
 
-class Engine(QtCore.QObject):
+class Engine(QObject):
     '''The game engine
 
     The game engine is basically a FSM that acts as an arbiter given a board
     and two players
     '''
 
-    gameStarted = QtCore.pyqtSignal()
-    roundStarted = QtCore.pyqtSignal()
-    roundEnded = QtCore.pyqtSignal()
-    gameEnded = QtCore.pyqtSignal()
-    playerMoved = QtCore.pyqtSignal(int, Player)
+    gameStarted = pyqtSignal()
+    roundStarted = pyqtSignal()
+    roundEnded = pyqtSignal()
+    gameEnded = pyqtSignal()
+    playerMoved = pyqtSignal(int, Player)
 
     ROLE_X = 'X'
     ROLE_0 = '0'
@@ -28,6 +31,9 @@ class Engine(QtCore.QObject):
         self.board.playerMoved.connect(self.handlePlayerMove)
 
         self.players = PlayersGroup(player_1, player_2)
+
+        self.gameRunning = False
+        self.awaitingMove = False
 
     def startGame(self):
         self.gameStarted.emit()
