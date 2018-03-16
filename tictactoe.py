@@ -3,13 +3,11 @@
 import sys
 
 try:
-    from PyQt4.QtCore import pyqtSignal
     from PyQt4.QtGui import (
         QApplication, QButtonGroup, QFont, QGridLayout, QMainWindow,
         QMessageBox, QPushButton, QWidget,
     )
 except ImportError:
-    from PyQt5.QtCore import pyqtSignal
     from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import (
         QApplication, QButtonGroup, QGridLayout, QMainWindow, QMessageBox,
