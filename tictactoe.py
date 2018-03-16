@@ -14,9 +14,7 @@ except ImportError:
         QPushButton, QWidget,
     )
 
-from board import Board
-from engine import Engine
-from players import DumbMachinePlayer, HumanPlayer
+from engine import Board, Engine, DumbMachinePlayer, HumanPlayer
 
 
 BUTTON_SIZE = 100
